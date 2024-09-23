@@ -32,14 +32,7 @@ app.get("/", (req, res) => {
 // Route to handle POST requests for user login (Sign-In)
 app.post("/signin", async (req, res) => {
   const { name, prno, mobileNo, dob, password, department } = req.body;
-  console.log("Received data:", {
-    name,
-    prno,
-    mobileNo,
-    dob,
-    password,
-    department,
-  });
+
   try {
     const existingUser = await User.findOne({ prno });
     if (existingUser) {
@@ -80,7 +73,6 @@ app.post("/signin", async (req, res) => {
 // Route to handle POST requests for user registration (Sign-Up)
 app.post("/signup", async (req, res) => {
   const { prno, password } = req.body;
-  console.log("Received data:", { prno, password });
   try {
     const user = await User.findOne({ prno });
     if (!user) {
