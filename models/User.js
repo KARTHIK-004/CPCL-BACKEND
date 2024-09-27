@@ -9,14 +9,16 @@ const userSchema = new Schema({
   dob: { type: Date, required: true },
   password: { type: String, required: true },
   department: { type: String, required: true },
-  role: { 
-    type: String, 
-    required: true, 
+  role: {
+    type: String,
+    required: true,
   },
   createdAt: { type: Date, default: Date.now },
-  photo: { 
-    type: String, 
-    default: "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+  photo: {
+    type: String,
+    default: {
+      uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+    },
   },
 });
 

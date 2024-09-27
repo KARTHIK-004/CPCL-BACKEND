@@ -2,16 +2,17 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
+const multer = require("multer");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("./models/User.js"); // Ensure this path is correct
-const jwt = require("jsonwebtoken");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase JSON body size limit
 
 // MongoDB connection URI from .env file
 const mongoURI = process.env.MONGO_URI;
@@ -21,6 +22,24 @@ mongoose
   .connect(mongoURI)
   .then(() => console.log("MongoDB connected successfully"))
   .catch((err) => console.error("MongoDB connection error:", err));
+
+// Set up multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Specify the folder to store uploads
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname); // Append timestamp to the original file name for uniqueness
+  },
+});
+
+// Configure multer with file size limit
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5 MB limit
+  },
+});
 
 // Route to handle GET requests
 app.get("/", (req, res) => {
@@ -94,9 +113,10 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Route to update ID card
-app.put("/update-id-card", authenticateToken, async (req, res) => {
-  const { name, email, phone, department, dob, address, photo, role } = req.body;
+// Route to update ID card (with image upload)
+app.put("/update-id-card", authenticateToken, upload.single('photo'), async (req, res) => { 
+  console.log("Uploaded File:", req.file);
+  const { name, email, phone, department, dob, address, role } = req.body;
 
   try {
     const user = await User.findOne({ prno: req.user.prno });
@@ -106,7 +126,6 @@ app.put("/update-id-card", authenticateToken, async (req, res) => {
 
     // Validate and format the date of birth
     if (dob) {
-      // Check if the date is in "YYYY-MM-DD" format
       const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dobRegex.test(dob)) {
         return res.status(400).send({ status: "error", data: "Invalid date format for dob! Please use YYYY-MM-DD." });
@@ -126,8 +145,10 @@ app.put("/update-id-card", authenticateToken, async (req, res) => {
     user.phone = phone || user.phone;
     user.department = department || user.department;
     user.address = address || user.address;
-    user.photo = photo || user.photo;
+    user.photo = req.file ? req.file.path : user.photo; 
     user.role = role || user.role;
+
+    
 
     await user.save();
     res.status(200).send({ status: "ok", data: "User updated successfully!" });
@@ -136,8 +157,6 @@ app.put("/update-id-card", authenticateToken, async (req, res) => {
     res.status(500).send({ status: "error", data: "An error occurred. Please try again." });
   }
 });
-
-
 
 // Route to fetch user profile by employee number
 app.get("/profile/:empNumber", async (req, res) => {
@@ -183,7 +202,7 @@ app.get("/search", async (req, res) => {
 
   try {
     const query = {};
-    if (name) query.name = { $regex: name, $options: "i" };
+    if (name) query.name = { $regex: name, $options: "i" }; // Case-insensitive search
     if (prno) query.prno = prno;
     if (department) query.department = department;
 
