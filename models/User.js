@@ -16,9 +16,7 @@ const userSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
   photo: {
     type: String,
-    default: {
-      uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-    },
+    default: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
   },
 });
 
