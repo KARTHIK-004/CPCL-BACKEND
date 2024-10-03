@@ -46,8 +46,8 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// Route to handle POST requests for user registration (Sign-In)
-app.post("/signin", async (req, res) => {
+// Route to handle POST requests for user registration (Sign-Up)
+app.post("/register", async (req, res) => {
   const { name, prno, mobileNo, dob, password, department, role, email } =
     req.body;
 
@@ -88,21 +88,21 @@ app.post("/signin", async (req, res) => {
   }
 });
 
-// Route to handle POST requests for user login (Sign-Up)
-app.post("/signup", async (req, res) => {
+// Route to handle POST requests for user login (Sign-In)
+app.post("/login", async (req, res) => {
   const { prno, password } = req.body;
   try {
     const user = await User.findOne({ prno });
     if (!user) {
       return res
-        .status(400)
-        .send({ status: "error", data: "User does not exist!" });
+        .status(404)
+        .json({ status: "error", message: "PR number not found" });
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res
-        .status(400)
-        .send({ status: "error", data: "Invalid password!" });
+        .status(401)
+        .json({ status: "error", message: "Invalid credentials" });
     }
 
     // Generate a token when signing in
